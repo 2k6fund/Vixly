@@ -49,31 +49,10 @@
   for(let i=0;i<25;i++){const d=document.createElement('div');d.className='dollar';d.textContent='$';d.style.left=Math.random()*100+'vw';d.style.fontSize=14+Math.random()*28+'px';d.style.animationDuration=8+Math.random()*12+'s';document.body.appendChild(d)}
 
   let balance=0;
-  const DAILY_CAP=5; // $5 per day
-  const todayKey=new Date().toDateString();
-  let earnedToday=JSON.parse(localStorage.getItem('earnedToday')||'{}');
-  if(!earnedToday[todayKey]) earnedToday[todayKey]=0;
   let watched=new Set(JSON.parse(localStorage.getItem('watched')||'[]'));
   let page=0;
   const perPage=20;
   const totalVideos=100;
-
-  // Royalty‑free sample videos (CC0 / Big Buck Bunny)
-  // Royalty‑free CC0 videos + posters (Pixabay / Pexels)
-  const videos = [
-    {
-      src: "https://cdn.pixabay.com/video/2023/03/06/153424-805164871_large.mp4",
-      poster: "https://cdn.pixabay.com/photo/2023/03/06/17/19/money-7837021_640.jpg"
-    },
-    {
-      src: "https://cdn.pixabay.com/video/2022/10/03/133475-757793585_large.mp4",
-      poster: "https://cdn.pixabay.com/photo/2022/09/15/19/07/business-7457764_640.jpg"
-    },
-    {
-      src: "https://cdn.pixabay.com/video/2021/08/25/86437-593707722_large.mp4",
-      poster: "https://cdn.pixabay.com/photo/2021/08/25/17/06/stock-market-6572387_640.jpg"
-    }
-  ];
 
   function signup(){document.getElementById('auth').classList.add('hidden');document.getElementById('home').classList.remove('hidden');loadMore()}
   function logout(){location.reload()}
@@ -82,33 +61,20 @@
     if(watched.has(index))return;
     const overlay=document.createElement('div');overlay.className='overlay';
     const viewer=document.createElement('div');viewer.className='viewer';
-    const vid=document.createElement('video');
-    vid.src = videos[index % videos.length].src;
-    vid.poster = videos[index % videos.length].poster;
-    vid.autoplay=true;
-    vid.muted=false;
-    vid.playsInline=true;
-    vid.style.maxWidth='90vw';
-    vid.style.borderRadius='14px';loader.className='loader';
-    const timer=document.createElement('p');
-    const meta=document.createElement('small');meta.style.opacity='.8';timer.textContent='Watching… 1:30';
+    const loader=document.createElement('div');loader.className='loader';
+    const timer=document.createElement('p');timer.textContent='Watching… 1:30';
 
-    viewer.append(vid,timer,meta);overlay.appendChild(viewer);document.body.appendChild(overlay);
+    viewer.append(loader,timer);overlay.appendChild(viewer);document.body.appendChild(overlay);
 
-    let t=40; // 40s watch time
-    vid.addEventListener('loadedmetadata',()=>{meta.textContent=`Video length: ${Math.floor(vid.duration/60)}:${String(Math.floor(vid.duration%60)).padStart(2,'0')}`});
-
+    let t=90;
     const int=setInterval(()=>{t--;timer.textContent=`Watching… ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
       if(t<=0){clearInterval(int);overlay.remove();reward(index)}},1000)
   }
 
   function reward(index){
-    if(earnedToday[todayKey]>=DAILY_CAP){alert('Daily earning limit reached');return;}
     watched.add(index);
     localStorage.setItem('watched',JSON.stringify([...watched]));
     balance+=0.5;
-    earnedToday[todayKey]+=0.5;
-    localStorage.setItem('earnedToday',JSON.stringify(earnedToday));
     document.getElementById('bal').textContent=balance.toFixed(2);
     document.querySelector(`[data-i="${index}"]`).classList.add('watched');
   }
@@ -122,24 +88,16 @@
       const v=document.createElement('div');v.className='video';v.dataset.i=i;v.style.animationDelay=`${(i-start)*0.04}s`;
       if(watched.has(i))v.classList.add('watched');
 
-      const video=document.createElement('video');
-      video.src = videos[i % videos.length].src;
-      video.poster = videos[i % videos.length].poster;
-      video.muted=true;
-      video.loop=true;
-      video.playsInline=true;
-      video.preload='metadata';
-      video.style.width='100%';
-      video.style.height='100%';
+      const c=document.createElement('canvas');c.width=600;c.height=400;const x=c.getContext('2d');
+      const g=x.createLinearGradient(0,0,600,400);g.addColorStop(0,'#0e1a12');g.addColorStop(1,'#00ff8c');x.fillStyle=g;x.fillRect(0,0,600,400);
+      x.fillStyle='#fff';x.beginPath();x.moveTo(260,180);x.lineTo(260,220);x.lineTo(310,200);x.fill();
+      x.font='bold 28px Segoe UI';x.fillText(`Video ${i+1}`,20,360);
 
       const img=document.createElement('img');img.src=c.toDataURL();
       const p=document.createElement('p');p.textContent=`Video ${i+1}`;
 
       v.onclick=()=>openViewer(i);
-      v.append(video,p);
-      v.addEventListener('mouseenter',()=>video.play());
-      v.addEventListener('mouseleave',()=>video.pause());
-      v.addEventListener('touchstart',()=>video.play());grid.appendChild(v);
+      v.append(img,p);grid.appendChild(v);
     }
     page++;
   }
