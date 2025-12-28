@@ -59,10 +59,20 @@
   const totalVideos=100;
 
   // Royalty‑free sample videos (CC0 / Big Buck Bunny)
-  const videos=[
-    "https://www.w3schools.com/html/mov_bbb.mp4",
-    "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/paint.webm"
+  // Royalty‑free CC0 videos + posters (Pixabay / Pexels)
+  const videos = [
+    {
+      src: "https://cdn.pixabay.com/video/2023/03/06/153424-805164871_large.mp4",
+      poster: "https://cdn.pixabay.com/photo/2023/03/06/17/19/money-7837021_640.jpg"
+    },
+    {
+      src: "https://cdn.pixabay.com/video/2022/10/03/133475-757793585_large.mp4",
+      poster: "https://cdn.pixabay.com/photo/2022/09/15/19/07/business-7457764_640.jpg"
+    },
+    {
+      src: "https://cdn.pixabay.com/video/2021/08/25/86437-593707722_large.mp4",
+      poster: "https://cdn.pixabay.com/photo/2021/08/25/17/06/stock-market-6572387_640.jpg"
+    }
   ];
 
   function signup(){document.getElementById('auth').classList.add('hidden');document.getElementById('home').classList.remove('hidden');loadMore()}
@@ -73,7 +83,8 @@
     const overlay=document.createElement('div');overlay.className='overlay';
     const viewer=document.createElement('div');viewer.className='viewer';
     const vid=document.createElement('video');
-    vid.src=videos[index%videos.length];
+    vid.src = videos[index % videos.length].src;
+    vid.poster = videos[index % videos.length].poster;
     vid.autoplay=true;
     vid.muted=false;
     vid.playsInline=true;
@@ -112,7 +123,8 @@
       if(watched.has(i))v.classList.add('watched');
 
       const video=document.createElement('video');
-      video.src=videos[i%videos.length];
+      video.src = videos[i % videos.length].src;
+      video.poster = videos[i % videos.length].poster;
       video.muted=true;
       video.loop=true;
       video.playsInline=true;
