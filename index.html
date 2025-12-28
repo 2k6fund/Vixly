@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vixly – Watch & Earn</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { margin:0; min-height:100vh; background:#0e1a12; color:#eafff1; overflow-x:hidden; }
+
+    .dollar{position:fixed;color:rgba(0,255,140,.15);animation:float 12s linear infinite;pointer-events:none}
+    @keyframes float{from{transform:translateY(100vh)}to{transform:translateY(-10vh)}}
+
+    header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;background:#0b1410;position:sticky;top:0;z-index:10}
+    header h1{color:#00ff8c;margin:0}
+
+    .btn{background:#00ff8c;color:#0b1410;border:none;padding:10px 16px;border-radius:6px;font-weight:600;cursor:pointer}
+
+    .container{padding:20px;max-width:1200px;margin:auto}
+    .hidden{display:none}
+
+    .card{background:rgba(255,255,255,.05);border-radius:14px;padding:24px;max-width:420px;margin:60px auto}
+    input{width:100%;padding:12px;margin:10px 0;border-radius:6px;border:none}
+
+    .wallet{background:linear-gradient(135deg,#00ff8c,#00c96d);color:#042b1a;border-radius:14px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+
+    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+    .video{background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;cursor:pointer;position:relative}
+    .video.watched{opacity:.4;pointer-events:none}
+    .video img{width:100%}
+    .video p{margin:8px;font-size:14px}
+
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:100}
+    .viewer{text-align:center}
+    .loader{width:70px;height:70px;border:6px solid rgba(255,255,255,.2);border-top:6px solid #00ff8c;border-radius:50%;animation:spin 1s linear infinite;margin:auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    footer{text-align:center;padding:20px;opacity:.6}
+  </style>
+</head>
+<body>
+
+<script>
+  // floating $
+  for(let i=0;i<25;i++){const d=document.createElement('div');d.className='dollar';d.textContent='$';d.style.left=Math.random()*100+'vw';d.style.fontSize=14+Math.random()*28+'px';d.style.animationDuration=8+Math.random()*12+'s';document.body.appendChild(d)}
+
+  let balance=0;
+  let watched=new Set(JSON.parse(localStorage.getItem('watched')||'[]'));
+  let page=0;
+  const perPage=20;
+  const totalVideos=100;
+
+  function signup(){document.getElementById('auth').classList.add('hidden');document.getElementById('home').classList.remove('hidden');loadMore()}
+  function logout(){location.reload()}
+
+  function openViewer(index){
+    if(watched.has(index))return;
+    const overlay=document.createElement('div');overlay.className='overlay';
+    const viewer=document.createElement('div');viewer.className='viewer';
+    const loader=document.createElement('div');loader.className='loader';
+    const timer=document.createElement('p');timer.textContent='Watching… 1:30';
+
+    viewer.append(loader,timer);overlay.appendChild(viewer);document.body.appendChild(overlay);
+
+    let t=90;
+    const int=setInterval(()=>{t--;timer.textContent=`Watching… ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
+      if(t<=0){clearInterval(int);overlay.remove();reward(index)}},1000)
+  }
+
+  function reward(index){
+    watched.add(index);
+    localStorage.setItem('watched',JSON.stringify([...watched]));
+    balance+=0.5;
+    document.getElementById('bal').textContent=balance.toFixed(2);
+    document.querySelector(`[data-i="${index}"]`).classList.add('watched');
+  }
+
+  function loadMore(){
+    const grid=document.getElementById('videoGrid');
+    const start=page*perPage;
+    const end=Math.min(start+perPage,totalVideos);
+
+    for(let i=start;i<end;i++){
+      const v=document.createElement('div');v.className='video';v.dataset.i=i;
+      if(watched.has(i))v.classList.add('watched');
+
+      const c=document.createElement('canvas');c.width=600;c.height=400;const x=c.getContext('2d');
+      const g=x.createLinearGradient(0,0,600,400);g.addColorStop(0,'#0e1a12');g.addColorStop(1,'#00ff8c');x.fillStyle=g;x.fillRect(0,0,600,400);
+      x.fillStyle='#fff';x.beginPath();x.moveTo(260,180);x.lineTo(260,220);x.lineTo(310,200);x.fill();
+      x.font='bold 28px Segoe UI';x.fillText(`Video ${i+1}`,20,360);
+
+      const img=document.createElement('img');img.src=c.toDataURL();
+      const p=document.createElement('p');p.textContent=`Video ${i+1}`;
+
+      v.onclick=()=>openViewer(i);
+      v.append(img,p);grid.appendChild(v);
+    }
+    page++;
+  }
+
+  window.addEventListener('scroll',()=>{if(window.innerHeight+window.scrollY>=document.body.offsetHeight-200){if(page*perPage<totalVideos)loadMore()}})
+</script>
+
+<header>
+  <h1>Vixly</h1>
+  <button class="btn" onclick="logout()">Logout</button>
+</header>
+
+<section id="auth" class="container">
+  <div class="card">
+    <h2>Create an Account</h2>
+    <input placeholder="Username" />
+    <input placeholder="Email" />
+    <input type="password" placeholder="Password" />
+    <button class="btn" style="width:100%;margin-top:10px" onclick="signup()">Sign Up</button>
+  </div>
+</section>
+
+<section id="home" class="container hidden">
+  <div class="wallet">
+    <div><h2>$<span id="bal">0.00</span></h2><div>Wallet Balance</div></div>
+    <div>Agency code: <strong>2k6fund</strong></div>
+  </div>
+
+  <h3>Watch Videos & Earn</h3>
+  <div class="video-grid" id="videoGrid"></div>
+</section>
+
+<footer>© 2025 Vixly</footer>
+</body>
+</html>
