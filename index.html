@@ -6,12 +6,12 @@
   <title>Vixly – Watch & Earn</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-    body { margin:0; min-height:100vh; background:#0e1a12; color:#eafff1; overflow-x:hidden; }
+    body { margin:0; min-height:100vh; background:#0e1a12; color:#eafff1; overflow-x:hidden; animation:pageEnter .8s cubic-bezier(.22,1,.36,1) }
 
     .dollar{position:fixed;color:rgba(0,255,140,.15);animation:float 12s linear infinite;pointer-events:none}
     @keyframes float{from{transform:translateY(100vh)}to{transform:translateY(-10vh)}}
 
-    header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;background:#0b1410;position:sticky;top:0;z-index:10}
+    header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;background:#0b1410;position:sticky;top:0;z-index:10;animation:slideDown .6s ease}
     header h1{color:#00ff8c;margin:0}
 
     .btn{background:#00ff8c;color:#0b1410;border:none;padding:10px 16px;border-radius:6px;font-weight:600;cursor:pointer}
@@ -22,10 +22,10 @@
     .card{background:rgba(255,255,255,.05);border-radius:14px;padding:24px;max-width:420px;margin:60px auto}
     input{width:100%;padding:12px;margin:10px 0;border-radius:6px;border:none}
 
-    .wallet{background:linear-gradient(135deg,#00ff8c,#00c96d);color:#042b1a;border-radius:14px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+    .wallet{background:linear-gradient(135deg,#00ff8c,#00c96d);color:#042b1a;border-radius:14px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:20px;animation:walletPop .6s cubic-bezier(.22,1,.36,1)}
 
     .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
-    .video{background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;cursor:pointer;position:relative}
+    .video{background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;cursor:pointer;position:relative;opacity:0;transform:translateY(20px);animation:videoIn .6s ease forwards;transition:transform .35s ease,box-shadow .35s ease} .video:hover{transform:translateY(-6px) scale(1.03);box-shadow:0 14px 30px rgba(0,0,0,.35)}
     .video.watched{opacity:.4;pointer-events:none}
     .video img{width:100%}
     .video p{margin:8px;font-size:14px}
@@ -34,6 +34,10 @@
     .viewer{text-align:center}
     .loader{width:70px;height:70px;border:6px solid rgba(255,255,255,.2);border-top:6px solid #00ff8c;border-radius:50%;animation:spin 1s linear infinite;margin:auto}
     @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pageEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:none}}
+@keyframes walletPop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes videoIn{to{opacity:1;transform:none}}
 
     footer{text-align:center;padding:20px;opacity:.6}
   </style>
@@ -45,10 +49,21 @@
   for(let i=0;i<25;i++){const d=document.createElement('div');d.className='dollar';d.textContent='$';d.style.left=Math.random()*100+'vw';d.style.fontSize=14+Math.random()*28+'px';d.style.animationDuration=8+Math.random()*12+'s';document.body.appendChild(d)}
 
   let balance=0;
+  const DAILY_CAP=5; // $5 per day
+  const todayKey=new Date().toDateString();
+  let earnedToday=JSON.parse(localStorage.getItem('earnedToday')||'{}');
+  if(!earnedToday[todayKey]) earnedToday[todayKey]=0;
   let watched=new Set(JSON.parse(localStorage.getItem('watched')||'[]'));
   let page=0;
   const perPage=20;
   const totalVideos=100;
+
+  // Royalty‑free sample videos (CC0 / Big Buck Bunny)
+  const videos=[
+    "https://www.w3schools.com/html/mov_bbb.mp4",
+    "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/paint.webm"
+  ];
 
   function signup(){document.getElementById('auth').classList.add('hidden');document.getElementById('home').classList.remove('hidden');loadMore()}
   function logout(){location.reload()}
@@ -57,20 +72,32 @@
     if(watched.has(index))return;
     const overlay=document.createElement('div');overlay.className='overlay';
     const viewer=document.createElement('div');viewer.className='viewer';
-    const loader=document.createElement('div');loader.className='loader';
-    const timer=document.createElement('p');timer.textContent='Watching… 1:30';
+    const vid=document.createElement('video');
+    vid.src=videos[index%videos.length];
+    vid.autoplay=true;
+    vid.muted=false;
+    vid.playsInline=true;
+    vid.style.maxWidth='90vw';
+    vid.style.borderRadius='14px';loader.className='loader';
+    const timer=document.createElement('p');
+    const meta=document.createElement('small');meta.style.opacity='.8';timer.textContent='Watching… 1:30';
 
-    viewer.append(loader,timer);overlay.appendChild(viewer);document.body.appendChild(overlay);
+    viewer.append(vid,timer,meta);overlay.appendChild(viewer);document.body.appendChild(overlay);
 
-    let t=90;
+    let t=40; // 40s watch time
+    vid.addEventListener('loadedmetadata',()=>{meta.textContent=`Video length: ${Math.floor(vid.duration/60)}:${String(Math.floor(vid.duration%60)).padStart(2,'0')}`});
+
     const int=setInterval(()=>{t--;timer.textContent=`Watching… ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
       if(t<=0){clearInterval(int);overlay.remove();reward(index)}},1000)
   }
 
   function reward(index){
+    if(earnedToday[todayKey]>=DAILY_CAP){alert('Daily earning limit reached');return;}
     watched.add(index);
     localStorage.setItem('watched',JSON.stringify([...watched]));
     balance+=0.5;
+    earnedToday[todayKey]+=0.5;
+    localStorage.setItem('earnedToday',JSON.stringify(earnedToday));
     document.getElementById('bal').textContent=balance.toFixed(2);
     document.querySelector(`[data-i="${index}"]`).classList.add('watched');
   }
@@ -81,19 +108,26 @@
     const end=Math.min(start+perPage,totalVideos);
 
     for(let i=start;i<end;i++){
-      const v=document.createElement('div');v.className='video';v.dataset.i=i;
+      const v=document.createElement('div');v.className='video';v.dataset.i=i;v.style.animationDelay=`${(i-start)*0.04}s`;
       if(watched.has(i))v.classList.add('watched');
 
-      const c=document.createElement('canvas');c.width=600;c.height=400;const x=c.getContext('2d');
-      const g=x.createLinearGradient(0,0,600,400);g.addColorStop(0,'#0e1a12');g.addColorStop(1,'#00ff8c');x.fillStyle=g;x.fillRect(0,0,600,400);
-      x.fillStyle='#fff';x.beginPath();x.moveTo(260,180);x.lineTo(260,220);x.lineTo(310,200);x.fill();
-      x.font='bold 28px Segoe UI';x.fillText(`Video ${i+1}`,20,360);
+      const video=document.createElement('video');
+      video.src=videos[i%videos.length];
+      video.muted=true;
+      video.loop=true;
+      video.playsInline=true;
+      video.preload='metadata';
+      video.style.width='100%';
+      video.style.height='100%';
 
       const img=document.createElement('img');img.src=c.toDataURL();
       const p=document.createElement('p');p.textContent=`Video ${i+1}`;
 
       v.onclick=()=>openViewer(i);
-      v.append(img,p);grid.appendChild(v);
+      v.append(video,p);
+      v.addEventListener('mouseenter',()=>video.play());
+      v.addEventListener('mouseleave',()=>video.pause());
+      v.addEventListener('touchstart',()=>video.play());grid.appendChild(v);
     }
     page++;
   }
