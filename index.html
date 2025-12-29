@@ -54,7 +54,7 @@
   const perPage=20;
   const totalVideos=100;
 
-  function signin(){document.getElementById('auth').classList.add('hidden');document.getElementById('home').classList.remove('hidden');loadMore()}
+  function signup(){document.getElementById('auth').classList.add('hidden');document.getElementById('home').classList.remove('hidden');loadMore()}
   function logout(){location.reload()}
 
   function openViewer(index){
@@ -62,11 +62,11 @@
     const overlay=document.createElement('div');overlay.className='overlay';
     const viewer=document.createElement('div');viewer.className='viewer';
     const loader=document.createElement('div');loader.className='loader';
-    const timer=document.createElement('p');timer.textContent='Watching… 40';
+    const timer=document.createElement('p');timer.textContent='Watching… 1:30';
 
     viewer.append(loader,timer);overlay.appendChild(viewer);document.body.appendChild(overlay);
 
-    let t=40;
+    let t=90;
     const int=setInterval(()=>{t--;timer.textContent=`loading… ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
       if(t<=0){clearInterval(int);overlay.remove();reward(index)}},1000)
   }
@@ -74,7 +74,7 @@
   function reward(index){
     watched.add(index);
     localStorage.setItem('watched',JSON.stringify([...watched]));
-    balance+=1545;
+    balance+=572;
     document.getElementById('bal').textContent=balance.toFixed(2);
     document.querySelector(`[data-i="${index}"]`).classList.add('watched');
   }
@@ -115,7 +115,7 @@
     <h2>Sign In</h2>
     <input placeholder="Username" />
     <input type="password" placeholder="Password" />
-    <button class="btn" style="width:100%;margin-top:10px" onclick="signin()">Sign In</button>
+    <button class="btn" style="width:100%;margin-top:10px" onclick="signup()">Sign In</button>
   </div>
 </section>
 
@@ -129,6 +129,6 @@
   <div class="video-grid" id="videoGrid"></div>
 </section>
 
-<footer>© 2023 Vixly</footer>
+<footer>© 2025 Vixly</footer>
 </body>
 </html>
