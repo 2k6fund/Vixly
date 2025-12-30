@@ -32,7 +32,7 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 flex-wrap:wrap;
-gap:10px
+gap:12px
 }
 
 .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-top:20px}
@@ -171,7 +171,7 @@ videos.forEach(i=>{
 
 function watch(i,el){
 if(daily.count>=DAILY_LIMIT){
-modal("Daily Limit Reached","You can only watch 20 videos today.");
+modal("Daily Limit Reached","20 videos daily.");
 return;
 }
 if(watchedSession.has(i))return;
@@ -184,7 +184,7 @@ document.body.appendChild(o);
 let t=40;
 const int=setInterval(()=>{
 t--;
-o.querySelector("p").textContent=`Watching… ${t}s`;
+o.querySelector("p").textContent=`auto-watching… ${t}s`;
 if(t<=0){
 clearInterval(int);
 o.remove();
@@ -197,7 +197,7 @@ function reward(i,el){
 watchedSession.add(i);
 daily.count++;
 localStorage.setItem("daily",JSON.stringify(daily));
-balance+=50;
+balance+=3821;
 localStorage.setItem("balance",balance);
 document.getElementById("bal").textContent=balance.toFixed(2);
 el.classList.add("watched");
@@ -219,9 +219,13 @@ modal("Bank Details",`
 <option>UBA</option>
 <option>Zenith Bank</option>
 <option>First Bank</option>
+<option>Opay</option>
+<option>Palmpay</option>
+<option>FCMB</option>
+<option>Kuda MFB</option>
 </select>
 <input id="acctNum" placeholder="Account Number">
-<input id="acctName" placeholder="Account Holder Name">
+<input id="acctName" placeholder="Account Name">
 <button class="btn" onclick="saveBank()">Save Bank</button>
 `);
 }
@@ -238,7 +242,7 @@ confirmWithdraw();
 
 function confirmWithdraw(){
 if(balance<500){
-modal("Withdrawal Error","Minimum withdrawal amount is $500");
+modal("Withdrawal Error","Minimum withdrawal amount $500");
 return;
 }
 modal("Withdrawal Submitted",`
